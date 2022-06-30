@@ -1,0 +1,55 @@
+.graf {
+  background-color: rgb(255, 255, 255);
+  border: 1px solid #777;
+}
+
+h1 {
+  color: #1b6430;
+}
+
+h4 {
+  color: #2b9348
+}
+
+.subtitulo {
+  color: #2b9348
+}
+
+.imgText {
+  display: flex;
+  align-items: center;
+}
+
+#tooltip {
+  position: absolute;
+  width: 200px;
+  height: auto;
+  padding: 10px;
+  background-color: blanchedalmond;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+#tooltip.hidden  {
+    display: none;
+}
+
+#tooltip p {
+  margin: 0;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.highlight{
+	fill:palevioletred
+}
+
+#tooltip.hidden{
+	display: none;
+}
