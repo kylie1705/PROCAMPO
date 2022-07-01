@@ -53,3 +53,13 @@ h4 {
 #tooltip.hidden{
 	display: none;
 }
+
+div#info {
+  height: auto;
+  padding-top: 15px;
+}
+
+.espacioSVG2 {
+  border: 10px #1b6430;
+  stroke: #1b6430;
+}

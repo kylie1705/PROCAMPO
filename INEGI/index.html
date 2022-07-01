@@ -37,19 +37,31 @@
     <main class="container mt-4">
       <h1>Programa de Apoyos Directos al campo</h1>
       <div class="row">
-        <div class="col-6">
-          <h4>Click for details</h4>
+        <div class="col-5">
           <div id="tooltip" class="hidden">
-
             <p><strong>Mapa 1</strong></p>
             <p><span id="value">$855</span></p>
+          </div>
+          <div class="row">
+            <div class="col">
+              <select id="year" class="form-control my-2"></select>
+            </div>
+            <div class="col">
+              <select id="indicador" class="form-control my-2">
+                <option value="1009000050" selected>Productores Beneficiados</option>
+                <option value="1009000051">Monto Pagado</option>
+              </select>
+            </div>
           </div>
           <div id="mexicoMapa" width="100%"></div>
         </div>
         <div class="col">
-          <div id="detail" style="display: none">
-            <h4>Click for details</h4>
-          </div>  
+          <div id="detailBeneficiarios"></div>
+          <div id="detailMontos"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
           <div id="info">
             <h4>¿Qué es PROCAMPO?</h4>
             <div>
@@ -78,6 +90,7 @@
           </div>
         </div>
       </div>
+      
     </main>
 
     
