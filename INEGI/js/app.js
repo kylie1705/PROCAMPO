@@ -2,22 +2,24 @@ const year = d3.select("#year")
 const indicadorOp = d3.select("#indicador")
 
 const graficaHorizontal = async(yyyy, indicador) => {
+  
   // Seleccionar area para grafico
-  const graph = d3.select("#detailMontos")
+  const graph = d3.select("#detailBeneficiarios")
 
   // Cargar datos a tabular
   const dataset = await d3.csv("agricultura_1994_2019.csv", d3.autoType)
 
   // Definir dimensiones de grafico y SVG
   const anchoSVG = +graph.style("width").slice(0 , -2)
-  const altoSVG  =  anchoSVG 
+  const altoSVG  =  ( anchoSVG  * 10 ) / 10
 
   const margins = {
-      top:   20,
-      right: 20,
-      bottom:20,
-      left:  20,
+      top:   50,
+      right: 25,
+      bottom:75,
+      left:  70,
   }
+  
 
   const anchoGraph = anchoSVG - margins.left - margins.right
   const altoGraph  = altoSVG - margins.top -  margins.bottom
@@ -34,24 +36,17 @@ const graficaHorizontal = async(yyyy, indicador) => {
   // Crear gpo o layer ppal
   const gpoGraf = svg.append("g")
                      .attr("transform", `translate(${margins.left},${margins.top})`)
-
+  
   gpoGraf.append("rect")
          .attr("height", altoGraph)
          .attr("width", anchoGraph)
          .attr("fill", "#f8f9fa")
          
   const g = gpoGraf.append("g")
-               .attr("transform","translate(60, 100)")// `translate(${margins.left},${margins.top})`)
+                   .attr("transform",`translate(${margins.left},${margins.top})`)
                
   // Accesores
   const yAccesor = d => d.desc_entidad
-
-  // Titulos
-  const titleText = ( indicador == 1009000050 ) ? 'Top 10 Estados - Beneficiados PROCAMPO'
-                  : "Top 10 Estados - Montos Pagados PROCAMPO";
-
-  const xAxisLabelText = ( indicador == 1009000050 ) ? 'Total de Beneficiados PROCAMPO'
-                       : 'Total de Montos PROCAMPO';
 
   // Escaladores, parte estatica
   const xScale = d3.scaleLinear()
@@ -61,12 +56,20 @@ const graficaHorizontal = async(yyyy, indicador) => {
                    .range([0, height])
                    .padding(0.1);
 
+  // X Axis
+  // const xAxisTickFormat = number => d3.format('$,.3s')(number).replace('G', 'B');
+  const xAxisTickFormat = number => d3.format('$,.3s')(number).replace('G', 'B');
+
+  //  .tickSize(-innerHeight);
+  const xTicks = g.append("g")
+                  .attr("transform", `translate(0, ${height})`)
+                  
   ///////// Axis
   const titulo = g.append("text")
                   .attr("x", width)
                   .attr("y", -5)
                   .classed("titulo", true)
-                  
+
   const etiquetas = g.append("g")
  
 
@@ -90,16 +93,24 @@ const graficaHorizontal = async(yyyy, indicador) => {
       // sort filteres results using year
       dataFilter.sort((a,b) => b[year] - a[year])
 
-      // Axis
-      const xAxisTickFormat = number => d3.format('.3s')(number).replace('G', 'B');
-      
-      const xAxis = d3.axisBottom(xScale)
-                      .tickFormat(xAxisTickFormat)
-                      .tickSize(-innerHeight);
-
-
       // Take only top 10
       const data = dataFilter.slice(0, 10)
+
+      // Definir rango de colores para barras
+      // 
+      const color  = d3.scaleThreshold()
+                       .domain(Object.keys(data[0]).slice(1))
+                       .range(["#f0f3bd", "#00a896", "#028090", "#05668d"])
+                       
+
+
+      // Titulos
+      const titleText = ( id_indicador == 1009000050 ) ? 'Top 10 Estados - Beneficiados PROCAMPO'
+                      : "Top 10 Estados - Montos Pagados PROCAMPO";
+
+      const xAxisLabelText = ( id_indicador == 1009000050 ) ? 'Total de Beneficiados PROCAMPO'
+                          : 'Total de Montos PROCAMPO';
+
 
       // Accesores
       const xValue = d => d[year]
@@ -109,58 +120,35 @@ const graficaHorizontal = async(yyyy, indicador) => {
       xScale.domain([0, d3.max(data, xValue)])
       yScale.domain(data.map(yValue))
 
+      // Update ticks
+      xTicks.call(d3.axisBottom(xScale).tickFormat(xAxisTickFormat).tickSize(-height))
+
       // Grupo de Barras
       const barras = g.append("g")
       
       const rectGpo = barras.selectAll('rect')
                        .data(data, xValue)
-                       .classed("barra", true)
+                       
       
-      rectGpo.enter().append('rect')
-                     .attr('y', d => yScale(yValue(d)))
-                     .attr('width', d => xScale(xValue(d)))
-                     .attr('height', yScale.bandwidth())
-                     .attr("fill", "lightblue")
-                     .merge(rectGpo)
-                     .transition()
-                     .duration(1000)
-                     .attr('y', d => yScale(yValue(d)))
-                     .attr('width', d => xScale(xValue(d)))
-                     .attr('height', yScale.bandwidth())
-                     .attr("fill", "lightblue")
-                     .ease(d3.easeBounce)
+      rectGpo.enter()
+             .append('rect')
+             .merge(rectGpo)
+             .attr('y', d => yScale(yValue(d)))
+             .attr('height', yScale.bandwidth())
+             .attr("fill", d => color(xValue(d)))//"lightblue")
+             .transition()
+             .ease(d3.easeLinear)
+             .duration(500)
+             .delay(function(d,i){ return i * 50})
+             .attr('width', d => xScale(xValue(d)))
+         
 
-/*
-const bars = rectGpo.selectAll("rect")
-                    .data(data, xValue)
-bars.append("text")
-.attr("x", (d) => { return xScale(d) } )
-.attr("y", (d) => { return yScale.bandwidth() / 2})
-.attr("dy", ".35em")
-.text((d) => d )*/
-
-const et = etiquetas
-                .selectAll("text")
-                .data(data)
-
-    et.enter()
-      .append("text")
-      .attr("x", (d) => { return yScale(d) } )
-      .attr("y", d => yScale(yValue(d))  )
-      .merge(et)
-      .transition()
-      .duration(1000)
-      .attr("x", (d) => { return yScale(d) } )
-      .attr("y", (d) => yScale(yValue(d)))
-      //.text( yAccesor )
-      .text((d) => xValue(d).toLocaleString('en-US'))
-
-      yAxisGroup.transition(1000)
+      yAxisGroup.transition()
                 .call(d3.axisLeft(yScale))
    
 
     // Titulos
-    titulo.text(`${yyyy} - Top 10 Estados (Productores Beneficiados)`)
+    titulo.text(`${year} - ${titleText}`)
       
   }
 
@@ -174,17 +162,24 @@ const et = etiquetas
       render(e.target.value, indiID)
   })
 
+  indicadorOp.on("change", (e) => {
+      e.preventDefault()
+      let yyyy = year.node().value
+  
+      render(yyyy, e.target.value)
+  })
+
   render(yyyy, indicador)
 }
 
 
 /******************** BARRA *******************************/
-const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
-    const graf = d3.select(el)
+const draw = async ( year ) => {
+    const graf = d3.select("#detailMontos")
 
     // Dimensiones
     const anchoTotal = +graf.style("width").slice(0 , -2)
-    const altoTotal   =  ( anchoTotal * 9 ) / 16
+    const altoTotal   =   anchoTotal 
 
     const margins = {
         top: 60,
@@ -199,7 +194,7 @@ const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
     const svg = graf.append("svg")
                     .attr('width', anchoTotal)
                     .attr('height', altoTotal)
-                    .attr('class', 'espacioSVG')
+
 
     // g se usa para "agrupar" como tipo
     // capa o layer en photoshop
@@ -209,7 +204,7 @@ const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
     gpoGraf.append("rect")
            .attr("height", alto)
            .attr("width", ancho)
-           .attr("fill", "#fefae0")
+           .attr('fill', '#f8f9fa')
 
     const g = svg.append("g")
                  .attr("transform", `translate(${margins.left},${margins.top})`)
@@ -234,7 +229,7 @@ const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
 
     const titulo = g
                     .append("text")
-                    .attr("x", ancho / 4)
+                    .attr("x", ancho / 2)
                     .attr("y", -15)
                     .classed("titulo", true)
 
@@ -253,21 +248,20 @@ const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
     /************ 
         FUNCION DINAMICA 
     ***********/
-    const render = (medida, indicadorID) => {
+    const render = (yyyy) => {
 
       const dataFilter = dataset.filter( ( d ) => {
        // console.log(d.id_indicador + "==" + indicadorID)
-        return d.id_indicador == indicadorID ;
+        return d.id_indicador == 1009000050 ;
       })
 
       dataFilter.sort((a,b) => b[yyyy] - a[yyyy])
-     // console.log(dataFilter)
-      const data = ( region === "nacional" ) ? dataFilter.slice(0, 10) : dataFilter
+      const data = dataFilter.slice(0, 10)
       // console.log(dataFilter)
 
 
       // Accesores
-      const yAccesor = (d) => d[medida]
+      const yAccesor = (d) => d[yyyy]
       data.sort( (a, b) => yAccesor(b) - yAccesor(a) )
 
       // Escaladores
@@ -290,39 +284,19 @@ const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
       rect
           .enter()
           .append("rect")
-          .attr("x", (d) => x(xAccesor(d)))
-          .attr("y", (d) => y(0) ) // Comienza en el cero
-          .attr("width", x.bandwidth() )
-          .attr("height", 0)
-          .attr("fill", "green")
           .merge(rect)
-          .transition()
-          .duration(1000)
-          .ease(d3.easeBounce)
           .attr("x", (d) => x(xAccesor(d)))
           .attr("y", (d) => y(yAccesor(d)) ) // Comienza en el cero
           .attr("width", x.bandwidth() )
+          .attr("fill", "lightblue")
+          .transition()
+          .duration(1000)
+          .delay(function(d,i){ return i * 50})
+          .ease(d3.easeLinear)
           .attr("height", (d) => alto - y(yAccesor(d)) )
-          .attr("fill", "blue")
-
-      const et = etiquetas
-                  .selectAll("text")
-                  .data(data)
-
-      et.enter()
-        .append("text")
-        .attr("x", (d) => x(xAccesor(d)) )
-        .attr("y", (d) => y(0))
-        .merge(et)
-        .transition()
-        .duration(1000)
-        .attr("x", (d) => x(xAccesor(d)))
-        .attr("y", (d) => y(yAccesor(d)))
-        //.text( yAccesor )
-        .text((d) => yAccesor(d).toLocaleString('en-US'))
 
         // Titulos
-      titulo.text(`${medida} - Top 10 Estados (Productores Beneficiados)`)
+      titulo.text(`${yyyy} - Top 10 Estados (Montos entregados)`)
      
 
       // Ejes
@@ -339,37 +313,13 @@ const draw = async ( el, region="nacional", id_indicador, yyyy ) => {
 
   }
 
-  /********************************************
-  *                  EVENTOS                  *
-  ********************************************/
-  year.on("change", (e) => {
-      e.preventDefault()
-      //            JS              D3   
-      // console.log(e.target.value, metrica.node().value)
-      indiID = indicadorOp.node().value
-      //console.log(indicadorOp.node().value)
-      render(e.target.value, indiID)
-     // drawMap("#mexicoMapa", e.target.value, indiID)
-      // drawMap("#mexicoMapa", "1994", 1009000050)
-  })
-
-  indicadorOp.on("change", (e) => {
-    e.preventDefault()
-    //            JS              D3   
-    // console.log(e.target.value, metrica.node().value)
-    let yy = year.node().value
-    //console.log(year.node().value)
-    render(yy, e.target.value)
- //   drawMap("#mexicoMapa", yy, e.target.value)
-    })
-
-  render(yyyy, id_indicador)
+  render(year)
 
 }
 
 /********************MAPA *********************************/
-const drawMap = async (el, yyyy, id_indicador) => {
-    const graf = d3.select(el)
+const drawMap = async (yyyy) => {
+    const graf = d3.select("#mexicoMapa")
 
     // Carga de datos
     // Carga los datos que vamos a tabular
@@ -385,25 +335,13 @@ const drawMap = async (el, yyyy, id_indicador) => {
 
 
     // Carga los datos necesarios para dibujar el mapa
-     const mapDataset = await d3.json("geo-data.json")
-    //const mapDataset = await d3.json("geo-data_INEGI.json")
-
-    /* 
-          Productores beneficiados por el PROCAMPO
-          id_indicador = 1009000050 
-
-          Monto pagado por el PROCAMPO
-          id_indicador = 1009000051 
-
-          Filtremos la información en 2 array
-        productores y montoProcampo
-    */
-        //console.log(id_indicador)
-    const indicadores = dataset.filter( ( indicador ) => {
-      return indicador.id_indicador == id_indicador;
+    const mapDataset = await d3.json("geo-data.json")
+    
+    const indicadores = dataset.filter( (indicador) => {
+      return indicador.id_indicador == 1009000050;
     })
     indicadores.sort((a,b) => a[yyyy] - b[yyyy])
-   // console.log(indicadores)
+     console.log(indicadores)
  
     // Dimensiones
     const ancho = +graf.style("width").slice(0, -2)
@@ -444,9 +382,9 @@ const drawMap = async (el, yyyy, id_indicador) => {
       let max = d3.max(indicadores, (d) => d[yyyy])
       let rango = max / 5;
 
-      const color_domain = [1, min, (min + rango), max]
+      const color_domain = [0, min, (min + rango), max]
       const color_legend = d3.scaleThreshold()
-                             .range(["#CCC", "#70e000", "#38b000", "#008000"])
+                             .range(["#f0f3bd", "#00a896", "#028090", "#05668d"])
                              .domain(color_domain);
       
       // Agreguemos el grupo para el mapa
@@ -454,31 +392,15 @@ const drawMap = async (el, yyyy, id_indicador) => {
 
       // Aqui definimos nuestros path para los estados
       // Esta seccion es quien dibuja nuestro mapa
-      // de acuerdo a los datos en "states"
-      /*
-      const pathStates = g
-                          .selectAll('path')
-                          .data(estados.features)
-
-      rect
-          .enter()
-          .append("rect")
-          .attr("x", (d) => x(xAccesor(d)))
-          .attr("y", (d) => y(0) ) // Comienza en el cero
-          .attr("width", x.bandwidth() )
-          .attr("height", 0)
-          .attr("fill", "green")
-          .merge(rect)
-*/
-
-      
+      // de acuerdo a los datos en "states"    
+     // console.log(indicadores)
       g.selectAll("path")
        .data(estados.features)
        .join("path")
        .attr("d", path)
        .attr("stroke", "#3f37c9")
        .transition()
-       .delay(20)
+       .delay(200)
        .duration(1500)
        .attr('fill', function(d) {
                   const state = d.properties.NAME_1
@@ -486,8 +408,8 @@ const drawMap = async (el, yyyy, id_indicador) => {
                       return entry.desc_entidad === state;
                   })
                   
-                  value = ( indicador[0] !== undefined ) ? indicador[0][yyyy] : 0
-                  bColor = value == 0 ? "#CCC" : color_legend(value)
+                  value = ( indicador !== undefined ) ? indicador[0][yyyy] : 0
+                  bColor = value == 0 ? "#f0f3bd" : color_legend(value)
                   return bColor;
               })
 }
@@ -506,8 +428,9 @@ function closeDiv(divId) {
 
 
 /********************************MAIN POINT ***************************************** */
-drawMap("#mexicoMapa", "1994", 1009000050)
+drawMap("1994")
 graficaHorizontal("1994", 1009000050)
+draw("1994")
 // draw("#detailBeneficiarios", "nacional", 1009000050, "1994")
 // drawHorizontal("#detailBeneficiarios", "1994", 1009000050)
 // drawHorizontal("#detailBeneficiarios", "nacional", 1009000050, "1994")
