@@ -379,15 +379,21 @@ const loadGraphs = async(el, year, graphID) => {
                                   .style("fill", "black")
                                   .classed("rango", true)
                                   .text( (d, i) => { 
-                                          let start = d3.format(",d")(rangoDatos[i] + 1 )
+                                          let start = ( rangoDatos[i] > 0 ) ? d3.format(",d")(rangoDatos[i] + 1 )
+                                                    : 0;
                                           let end = ( rangoDatos[i+1] === undefined ) ? 0
                                                   : rangoDatos[i+1]
                                           
                                           let formattedEnd = d3.format(",d")(end)
 
-                                          //if ()
+                                          if ( start == 0 ) {
+                                            return `Sin Información`
+                                          }
+                                          else {
+                                            return (end > 0)  ? `${start} - ${formattedEnd}` : `${start} >`
+                                          }
 
-                                          return (end > 0)  ? `${start} - ${formattedEnd}` : `${start} >`
+                                          
                                     })
                         
       const title = gpoEscala.append("text")
