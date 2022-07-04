@@ -20,6 +20,41 @@ h4 {
   align-items: center;
 }
 
+div#info {
+  height: auto;
+  padding-top: 15px;
+}
+
+.espacioSVG2 {
+  border: 10px #1b6430;
+  stroke: #1b6430;
+}
+
+.titulo {
+  font: 15px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  text-anchor: end;
+}
+
+.subtitulo {
+  font-size: 13px;
+  font-family: Arial, Helvetica, sans-serif;
+  
+}
+
+.dataMin {
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: navy;
+}
+
+.rango {
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  
+}
+
+/** Tool tip **/
 #tooltip {
   position: absolute;
   width: 200px;
@@ -52,26 +87,4 @@ h4 {
 
 #tooltip.hidden{
 	display: none;
-}
-
-div#info {
-  height: auto;
-  padding-top: 15px;
-}
-
-.espacioSVG2 {
-  border: 10px #1b6430;
-  stroke: #1b6430;
-}
-
-.titulo {
-  font: 15px;
-  font-family: Georgia, 'Times New Roman', Times, serif;
-  text-anchor: end;
-}
-
-.subtitulo {
-  font-size: 13px;
-  font-family: Arial, Helvetica, sans-serif;
-  
 }

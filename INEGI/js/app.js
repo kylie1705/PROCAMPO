@@ -104,7 +104,7 @@ const loadGraphs = async(el, year, graphID) => {
 
           // X Axis
           // const xAxisTickFormat = number => d3.format('$,.3s')(number).replace('G', 'B');
-          const xAxisTickFormat = number => d3.format('$,.3s')(number).replace('G', 'B');
+          const xAxisTickFormat = number => d3.format(',.3s')(number).replace('G', 'B');
 
           //  .tickSize(-innerHeight);
           const xTicks = graphG.append("g")
@@ -115,8 +115,9 @@ const loadGraphs = async(el, year, graphID) => {
           // Titulos
           const titleText = 'Top 10 Estados - Beneficiados PROCAMPO'          
           const tituloHorizontal = graphG.append("text")
-                                         .attr("x", graphG.attr("width") - 50)
+                                         .attr("x", width)
                                          .attr("y", -5)
+                                         .classed("titulo", true)
                               
 
 //          const etiquetas = graphG.append("g")
@@ -171,6 +172,21 @@ const loadGraphs = async(el, year, graphID) => {
                     .duration(500)
                     .delay(function(d,i){ return i * 50})
                     .attr('width', d => xScale(xValue(d)))
+
+
+          barras.selectAll('text')
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("x", (d) => xScale(xValue(d)) - 50 )
+            .attr('y', (d) => yScale(yValue(d)) + 45 )
+            .classed("dataMin", true)
+            .style("fill", "lightblue")
+            .transition()
+            .ease(d3.easeLinear)
+            .duration(500)
+            .delay(function(d,i){ return i * 50})
+            .text( d => d3.format("$,d")(xValue(d)))
                 
 
               yAxisGroup.transition()
@@ -178,7 +194,7 @@ const loadGraphs = async(el, year, graphID) => {
           
 
             // Titulos
-            tituloHorizontal.text(`${year} - ${titleText}`)
+            tituloHorizontal.text(`${year} - ${titleText}`).style('fill', 'black')
               
           }
           renderHorizontal(year)
@@ -204,7 +220,7 @@ const loadGraphs = async(el, year, graphID) => {
       const titulo = graphG.append("text")
                            .attr("x", ancho / 2)
                            .attr("y", -15)
-                           .classed("subtitulo", true)
+                           .classed("titulo", true)
 
       /************ 
           FUNCION DINAMICA 
@@ -258,13 +274,32 @@ const loadGraphs = async(el, year, graphID) => {
             .ease(d3.easeLinear)
             .attr("height", (d) => alto - y(yAccesor(d)) )
 
+            ////////////////////////////////////////////////
+            barras.selectAll('text')
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("x", (d) => x(xAccesor(d)))
+            .attr("y", (d) => y(yAccesor(d)) ) // Comienza en el cero
+            // .attr("transform", "translate(300,150) rotate(-90)")
+            .classed("dataMin", true)
+            .style("fill", "navy")
+            .text( d => d3.format("$,d")(yAccesor(d)))
+          
+
+
+
+
+            /////////////////////////////////////////////////////////////////////
+
           // Titulos
-        titulo.text(`${yyyy} - Top 10 Estados (Montos entregados)`)
+        titulo.text(`${yyyy} - Top 10 Estados (Montos entregados)`).style('fill', 'black')
       
 
         // Ejes
+        const xAxisTickFormat = number => d3.format('$,.3s')(number);
         const xAxis = d3.axisBottom(x)
-        const yAxis = d3.axisLeft(y).ticks(8)
+        const yAxis = d3.axisLeft(y).tickFormat(xAxisTickFormat).ticks(8)
 
         xAxisGroup
                 .transition(1000)
@@ -313,10 +348,57 @@ const loadGraphs = async(el, year, graphID) => {
        let max = d3.max(indicadores, (d) => d[year])
        let rango = max / 5;
  
-       const color_domain = [0, min, (min + rango), max]
+       const color_domain = ( min > 0 ) ? [0, min, (min + rango), max]
+                          : [min, (min + rango), max - 100  , (max+rango)]
+       const rangoColor = ["#f0f3bd", "#00a896", "#028090", "#05668d"]
        const color_legend = d3.scaleThreshold()
-                              .range(["#f0f3bd", "#00a896", "#028090", "#05668d"])
+                              .range(rangoColor)
                               .domain(color_domain);
+
+      const rangoDatos = ( min > 0 ) ? [0, min, (min + rango), max]
+                       : [min, (min + rango), max, (max+rango)]
+
+      const gpoEscala = graphG.append("g")
+      const rectEscala = gpoEscala.selectAll('rect')
+                         .data(rangoDatos)
+                         .enter()
+                         .append("rect")
+                         .attr("width", 15)
+                         .attr("height", 15)
+                         .attr("x", (d, i) => ( i * 134) )
+                         .attr("y", altoGraph - 470)
+                         .attr("fill", (d, i) => ( rangoColor[i]))
+                         .classed("rangoColores", true)
+
+      const escalaText = gpoEscala.selectAll('text')
+                                  .data(rangoDatos)
+                                  .enter()
+                                  .append("text")
+                                  .attr("x", (d, i) => ( i * 134) + 20 )
+                                  .attr("y", altoGraph - 456)
+                                  .style("fill", "black")
+                                  .classed("rango", true)
+                                  .text( (d, i) => { 
+                                          let start = d3.format(",d")(rangoDatos[i] + 1 )
+                                          let end = ( rangoDatos[i+1] === undefined ) ? 0
+                                                  : rangoDatos[i+1]
+                                          
+                                          let formattedEnd = d3.format(",d")(end)
+
+                                          //if ()
+
+                                          return (end > 0)  ? `${start} - ${formattedEnd}` : `${start} >`
+                                    })
+                        
+      const title = gpoEscala.append("text")
+                         .attr("x", (anchoSVG / 2) + 75)
+                         .attr("y", altoGraph - 490)
+                         .style("fill", "black")
+                         .classed("titulo", true)
+                         .text(`Beneficiarios PROCAMPO - ${year}`)
+
+
+         
        
        // Agreguemos el grupo para el mapa
        const gpoMap = graphG.append("g")
@@ -358,115 +440,13 @@ const loadGraphs = async(el, year, graphID) => {
     loadGraphs("detailBeneficiarios", e.target.value, "horizontal")
     loadGraphs("detailMontos", e.target.value, "vertical")
   })
+
+
 }
 
-
-
-/********************MAPA *********************************/
-const drawMap = async (yyyy) => {
-    const graf = d3.select("#mexicoMapa")
-
-    // Carga de datos
-    // Carga los datos que vamos a tabular
-    const dataset = await d3.csv("agricultura_1994_2019.csv", d3.autoType)
-
-    // Crear select con años disponibles
-    yearSelect.selectAll("option")
-           .data(Object.keys(dataset[0]).slice(0, 24))
-           .enter()
-           .append("option")
-           .attr('value', (d) => d)
-           .text((d) => d)
-
-
-    // Carga los datos necesarios para dibujar el mapa
-    const mapDataset = await d3.json("geo-data.json")
-    
-    const indicadores = dataset.filter( (indicador) => {
-      return indicador.id_indicador == 1009000050;
-    })
-    indicadores.sort((a,b) => a[yyyy] - b[yyyy])
-     console.log(indicadores)
- 
-    // Dimensiones
-    const ancho = +graf.style("width").slice(0, -2)
-    const alto  = ancho + 10
-
-    // Area para dibujo
-    const svg = graf
-                  .append("svg")
-                  .attr("class", "graf")
-                  .attr("width", ancho)
-                  .attr("height", alto)
-
-      /******************************************************
-      * Dibujara nuestro mapa de acuerdo a lo seleccionado  *
-      ******************************************************/
-      /************************************************************
-      * Los puntos para los estados estan definidos en mapDataSet *
-      * que cargamos del json geo-data.json que obtuvimos de:     *
-      * https://github.com/leenoah1/mexicod3project               *
-      * Ajustamos algunos nombres como:                           *
-      *   ****** Distrito Federal  por Ciudad de Mexico           *
-      ************************************************************/
-      const estados = topojson.feature(mapDataset, mapDataset.objects.MEX_adm1)
-
-      // Definamos nuestra proyeccion
-      const projection = d3.geoMercator()
-      projection.scale(1).translate([0, 0])
-
-      // Definamos path
-      const path = d3.geoPath().projection(projection)
-      let b = path.bounds(estados)
-      let s = .9 / Math.max((b[1][0] - b[0][0]) / ancho, (b[1][1] - b[0][1]) / alto)
-      let t = [(ancho - s * (b[1][0] + b[0][0])) / 2, (alto - s * (b[1][1] + b[0][1])) / 2]
-      projection.scale(s).translate(t)
-                                
-      // Definamos el dominio                      
-      let min = d3.min(indicadores, (d) => d[yyyy])
-      let max = d3.max(indicadores, (d) => d[yyyy])
-      let rango = max / 5;
-
-      const color_domain = [0, min, (min + rango), max]
-      const color_legend = d3.scaleThreshold()
-                             .range(["#f0f3bd", "#00a896", "#028090", "#05668d"])
-                             .domain(color_domain);
-      
-      // Agreguemos el grupo para el mapa
-      const g = svg.append('g')
-
-      // Aqui definimos nuestros path para los estados
-      // Esta seccion es quien dibuja nuestro mapa
-      // de acuerdo a los datos en "states"    
-     // console.log(indicadores)
-      g.selectAll("path")
-       .data(estados.features)
-       .join("path")
-       .attr("d", path)
-       .attr("stroke", "#3f37c9")
-       .transition()
-       .delay(200)
-       .duration(1500)
-       .attr('fill', function(d) {
-                  const state = d.properties.NAME_1
-                  const indicador = indicadores.filter( function(entry) {
-                      return entry.desc_entidad === state;
-                  })
-                  
-                  value = ( indicador !== undefined ) ? indicador[0][yyyy] : 0
-                  bColor = value == 0 ? "#f0f3bd" : color_legend(value)
-                  return bColor;
-              })
-}
 
 
 /********************************MAIN POINT ***************************************** */
-// drawMap("1994")
 loadGraphs("mexicoMapa", "1994", "mapa")
 loadGraphs("detailBeneficiarios", "1994", "horizontal")
 loadGraphs("detailMontos", "1994", "vertical")
-// graficaHorizontal("1994", 1009000050)
-// draw("1994")
-// draw("#detailBeneficiarios", "nacional", 1009000050, "1994")
-// drawHorizontal("#detailBeneficiarios", "1994", 1009000050)
-// drawHorizontal("#detailBeneficiarios", "nacional", 1009000050, "1994")
