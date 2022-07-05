@@ -186,7 +186,7 @@ const loadGraphs = async(el, year, graphID) => {
             .ease(d3.easeLinear)
             .duration(500)
             .delay(function(d,i){ return i * 50})
-            .text( d => d3.format("$,d")(xValue(d)))
+            .text( d => d3.format(",d")(xValue(d)))
                 
 
               yAxisGroup.transition()
